@@ -1,0 +1,12 @@
+Don't use Task.Run() on the server
+    Asp.Net core is optimized for using async-await with I/O bound work. It is, however, not optimized for Task.Run. In essence, this creates an unoptimized thread when starting the task and overhead when the task completes. Threads won't be freed up as soon as possible, less threads will be available at any given time, so scalability will go down.
+    Client-side only, avoid on the server.
+
+Don't block async code
+    async method.Result ensures that the actual entities are returned after the task has been completed instead of just returning a task. It will block the thread and return the result of the method (also .Wait()) but blocks async code.
+    Blocks the calling thread until the task is complete, which means the thread cannot be returned to the thread pool. 
+    Asp.Net core doesn't have synchronization contexts anymore, the old asp.net did have this. Potentially every thread could have its synchronization context in ASP.Net. In ASP.Net Core it's the thread pool that's the context so individual threads don't need it anymore.
+     
+Don't modify shared state
+	Two methods which manipulate the same variable, returning it,  sharing its state, each task runs in a different thread and there is no synchronization context on each thread, but rather just one thread pool context, they both manipulate that same variable, and they might do so at the same time. Once that happens, the correct state of our variable isn't guaranteed anymore.
+	
